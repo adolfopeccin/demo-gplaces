@@ -4,7 +4,23 @@ class LocationsController < ApplicationController
   # GET /locations
   # GET /locations.json
   def index
-    @locations = Location.all
+    # @locations = Location.all
+
+    @Google_API_Key = "AIzaSyBOk8J2gdEIu1k5biw6LuxmmQKHalA_o10"
+    @google_places = GooglePlaces::Client.new(@Google_API_Key)
+
+    @geocode_array = Geocoder.coordinates("#{params[:search_loc]}")
+
+    if @geocode_array.present?
+      @place_search = @google_places.spots(@geocode_array[0], @geocode_array[1], :types => ['car_repair'], :radius => 2000, :language => 'pt-BR', :detail => false)
+    else
+      @place_search = @google_places.spots(-23.5505997, -46.6329324, :types => ['car_repair'], :radius => 2000, :language => 'pt-BR', :detail => false)
+    end
+
+    @hash_place = Gmaps4rails.build_markers(@place_search) do |place, marker|
+      marker.lat place.lat
+      marker.lng place.lng
+    end
   end
 
   # GET /locations/1
@@ -69,6 +85,7 @@ class LocationsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def location_params
-      params.fetch(:location, {})
+      # params.fetch(:location, {})
+      params.require(:location).permit(:search_loc)
     end
 end
